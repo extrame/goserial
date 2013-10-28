@@ -13,9 +13,22 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 	"syscall"
 	//"unsafe"
 )
+
+func listPort() (res []string) {
+	res = make([]string, 0)
+	filepath.Walk("/dev", func(path string, info os.FileInfo, err error) error {
+		if err == nil && (!info.IsDir()) && strings.HasPrefix(info.Name(), "tty.") {
+			res = append(res, path)
+		}
+		return nil
+	})
+	return
+}
 
 func openPort(name string, baud int) (rwc io.ReadWriteCloser, err error) {
 	f, err := os.OpenFile(name, syscall.O_RDWR|syscall.O_NOCTTY|syscall.O_NONBLOCK, 0666)

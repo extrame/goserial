@@ -92,6 +92,10 @@ func OpenPort(c *Config) (io.ReadWriteCloser, error) {
 	return openPort(c.Name, c.Baud)
 }
 
+func ListPort() []string {
+	return listPort()
+}
+
 // func Flush()
 
 // func SendBreak()

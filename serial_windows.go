@@ -4,6 +4,7 @@ package serial
 
 import (
 	"fmt"
+	"github.com/lxn/win"
 	"io"
 	"os"
 	"sync"
@@ -35,6 +36,39 @@ type structTimeouts struct {
 	ReadTotalTimeoutConstant    uint32
 	WriteTotalTimeoutMultiplier uint32
 	WriteTotalTimeoutConstant   uint32
+}
+
+func listPort() (res []String) {
+	var root win.HKEY
+	res = make([]string, 0)
+	rootpath, _ := syscall.UTF16PtrFromString("HARDWARE\\DEVICEMAP\\SERIALCOMM")
+	fmt.Println(win.RegOpenKeyEx(win.HKEY_LOCAL_MACHINE, rootpath, 0, win.KEY_READ, &root))
+
+	var callError int32
+	var index uint32 = 0
+	for callError == 0 {
+		var name_length uint32 = 72
+		var key_type uint32
+		var lpDataLength uint32 = 72
+
+		name := make([]uint16, 72)
+		lpData := make([]byte, 72)
+
+		callError = win.RegEnumValue(root, index, &name[0], &name_length, nil, &key_type, &lpData[0], &lpDataLength)
+
+		output := make([]uint16, 72)
+
+		for i := uint32(0); i < lpDataLength; i = i + 2 {
+			fmt.Println(uint16(lpData[i])<<8, "-", lpData[i+1])
+			output[i/2] = uint16(lpData[i+1])<<8 + uint16(lpData[i])
+		}
+
+		res = append(res, syscall.UTF16ToString(output))
+		index++
+	}
+
+	win.RegCloseKey(root)
+
 }
 
 func openPort(name string, baud int) (rwc io.ReadWriteCloser, err error) {
